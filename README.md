@@ -8,7 +8,9 @@ Espero que les sea de ayuda, y muchos éxitos. 😀
 
 - Teoría. 
 
-- Modelos de parciales (de los 3 módulos).
+- Modelos de parciales (de los 3 módulos y recuperatorios).
+
+- Finales.
 
 ## AC
 
