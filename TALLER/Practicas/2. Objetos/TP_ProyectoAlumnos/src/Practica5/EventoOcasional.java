@@ -1,11 +1,11 @@
 package Practica5;
 
-public class EventoOcacional extends Recital{
+public class EventoOcasional extends Recital{
     private String motivo;
     private String nombreContratante;
     private int dia;
     
-    public EventoOcacional(String mot, String nom, int dia, String nombreRecital, int cant, int cantMax){
+    public EventoOcasional(String mot, String nom, int dia, String nombreRecital, int cant, int cantMax){
         super(nombreRecital, cant, cantMax);
         this.motivo = mot;
         this.dia = dia;
@@ -24,19 +24,6 @@ public class EventoOcacional extends Recital{
         return dia;
     }
     
-   /* public boolean HayLugar(){
-        return this.getCantTemas() < this.getMaxTemas();
-    }
-@Override
-    public void agregarTema(String tema){
-        if(this.HayLugar()){
-            this.aumentarCantTemas();
-            this.getListaTemas()[this.getCantTemas()] = tema;
-        }
-    }
-*/
-    
-    
 @Override
     public String Actuar(){
         String aux;
@@ -45,7 +32,7 @@ public class EventoOcacional extends Recital{
         }
         else{
             if(this.getMotivo().equals("TV")){
-                aux = "Saludos amigos televidentes";
+                aux = "Saludos amigos televidentes:" + "\n";
             }
             else{
                 aux = "Un Feliz Cumpleaños para " + this.getNombreContratante();
