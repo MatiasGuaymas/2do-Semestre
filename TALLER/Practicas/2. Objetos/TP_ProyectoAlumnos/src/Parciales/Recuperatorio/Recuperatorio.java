@@ -25,6 +25,8 @@ public class Recuperatorio {
         sistEstadia.agregarSolicitud(soli6);
         sistEstadia.otorgarSubsidio(1200.0);
         System.out.println(sistEstadia.toString());
+
+        System.out.println("-----------------");
     }
     
 }
