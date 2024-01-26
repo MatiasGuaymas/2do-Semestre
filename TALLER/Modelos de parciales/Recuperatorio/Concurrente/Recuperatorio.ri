@@ -1,0 +1,157 @@
+programa recuperatorio
+procesos
+  proceso juntarPapeles(ES p: numero)
+  comenzar  
+    mientras(HayPapelEnLaEsquina)
+      tomarPapel
+      p:= p+1
+  fin
+  proceso juntarFlores(ES f:numero)
+  comenzar
+    mientras(HayFlorEnLaEsquina)
+      tomarFlor
+      f:= f+1
+  fin
+  proceso recorridoPapeles(E pasos: numero; ES p: numero)
+  comenzar
+    repetir pasos
+      juntarPapeles(p)
+      mover
+  fin
+  proceso depositarDeAUnaPap(E p: numero)
+  variables
+    avIni, caIni: numero
+  comenzar
+    avIni:= PosAv
+    caIni:= PosCa
+    repetir p
+      BloquearEsquina(50,50)
+      Pos(50,50)
+      depositarPapel
+      Pos(avIni,caIni)
+      LiberarEsquina(50,50)
+  fin
+  proceso recorridoFlores(E pasos: numero; ES f: numero)
+  comenzar
+    repetir pasos
+      juntarFlores(f)
+      mover
+  fin
+  proceso izquierda
+  comenzar
+    repetir 3
+      derecha
+  fin
+  proceso depositarDeAUnaFlo(E f: numero)
+  variables
+    avIni, caIni: numero
+  comenzar
+    avIni:= PosAv
+    caIni:= PosCa
+    repetir f
+      BloquearEsquina(49,49)
+      Pos(49,49)
+      depositarFlor
+      Pos(avIni,caIni)
+      LiberarEsquina(49,49)
+  fin
+areas
+  esquina1: AreaC(50,50,50,50)
+  esquina2: AreaC(49,49,49,49)
+  area1: AreaP(50,1,66,8)
+  area2: AreaP(50,20,66,27)
+  area3: AreaP(35,1,49,8)
+  area4: AreaP(35,20,49,27)
+  areaF: AreaP(1,1,1,1)
+robots
+  robot papelero
+  variables
+    pasos,id,p: numero
+  comenzar
+    RecibirMensaje(id, rf)
+    Random(pasos,3,4)
+    p:= 0
+    recorridoPapeles(pasos,p)
+    derecha
+    recorridoPapeles(pasos+pasos,p)
+    juntarPapeles(p)
+    depositarDeAUnaPap(p)
+    EnviarMensaje(id, rf)
+    EnviarMensaje(p, rf)
+  fin
+  robot florero
+  variables
+    id, pasos, f: numero
+  comenzar
+    RecibirMensaje(id,rf)
+    Random(pasos,3,4)
+    f:= 0
+    recorridoFlores(pasos, f)
+    izquierda
+    recorridoFlores(pasos+pasos, f)
+    juntarFlores(f)
+    depositarDeAUnaFlo(f)
+    EnviarMensaje(id, rf)
+    EnviarMensaje(f, rf)
+  fin
+  robot fiscalizador
+  variables
+    id, cant1, cant2, cant3, cant4, total: numero
+  comenzar
+    EnviarMensaje(1,r1)
+    EnviarMensaje(2,r2)
+    EnviarMensaje(3,r3)
+    EnviarMensaje(4,r4)
+    cant1:= -1
+    cant2:= -1
+    cant3:= -1
+    cant4:= -1
+    repetir 4
+      RecibirMensaje(id, *)
+      si(id = 1)
+        RecibirMensaje(cant1, r1)
+      sino
+        si(id = 2)
+          RecibirMensaje(cant2, r2)
+        sino
+          si(id = 3)
+            RecibirMensaje(cant3, r3)
+          sino
+            RecibirMensaje(cant4, r4)
+      si(cant1 >= 0) & (cant2 >= 0)
+        total:= total+ cant1 + cant2
+        Pos(50,50)
+        repetir cant1+cant2
+          tomarPapel
+        cant1:= -1
+      sino
+        si(cant3 >= 0) & (cant4 >= 0)
+          total:= total+cant3+cant4
+          Pos(49, 49)
+          repetir cant3+cant4
+            tomarFlor
+          cant3:= -1
+    Informar(total)
+  fin
+variables
+  r1, r2: papelero
+  r3, r4: florero
+  rf: fiscalizador
+comenzar
+  AsignarArea(r1, area1)
+  AsignarArea(r2, area2)
+  AsignarArea(r1, esquina1)
+  AsignarArea(r2, esquina1)
+  AsignarArea(r3, area3)
+  AsignarArea(r4, area4)
+  AsignarArea(r3, esquina2)
+  AsignarArea(r4, esquina2)
+  AsignarArea(rf, areaF)
+  AsignarArea(rf, esquina1)
+  AsignarArea(rf, esquina2)
+  Iniciar(r1,50,1)
+  Iniciar(r2,50,20)
+  Iniciar(r3,49,1)
+  Iniciar(r4,49,20)
+  Iniciar(rf,1,1)
+fin

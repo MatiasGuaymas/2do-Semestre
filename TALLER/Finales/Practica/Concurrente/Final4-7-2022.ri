@@ -1,0 +1,156 @@
+programa final
+procesos
+  proceso izquierda
+  comenzar
+    repetir 3
+      derecha
+  fin
+  proceso juntarPapeles(ES p: numero)
+  comenzar  
+    mientras(HayPapelEnLaEsquina)
+      tomarPapel
+      p:= p+1
+  fin
+  proceso recorrerCalle(ES p: numero)
+  comenzar
+    izquierda
+    repetir 2
+      juntarPapeles(p)
+      mover
+    juntarPapeles(p)
+  fin
+  proceso juntarFlores(ES f: numero)
+  comenzar
+    mientras(HayFlorEnLaEsquina)
+      tomarFlor
+      f:= f+1
+  fin
+  proceso recorrerAvenida(ES f: numero)
+  comenzar
+    repetir 2
+      juntarFlores(f)
+      mover
+    juntarFlores(f)
+  fin
+  proceso depositarUno(E papeles: numero; E flores: numero)
+  variables
+    avActual, caActual: numero
+  comenzar
+    avActual:= PosAv
+    caActual:= PosCa
+    repetir papeles
+      BloquearEsquina(10,10)
+      Pos(10,10)
+      depositarPapel
+      Pos(avActual, caActual)
+      LiberarEsquina(10,10)
+    repetir flores
+      BloquearEsquina(10,10)
+      Pos(10,10)
+      depositarFlor
+      Pos(avActual, caActual)
+      LiberarEsquina(10,10)
+  fin
+  proceso enviarIDs
+  comenzar
+    EnviarMensaje(1, r1)
+    EnviarMensaje(2, r2)
+    EnviarMensaje(3, r3)
+  fin
+  proceso siguienteEtapa
+  comenzar
+    EnviarMensaje(V, r1)
+    EnviarMensaje(V, r2)
+    EnviarMensaje(V, r3)
+  fin
+  proceso maximo(E cant: numero; ES max: numero; E id: numero; ES idMax: numero)
+  comenzar
+    si(cant > max)
+      max:= cant
+      idMax:= id
+  fin
+  proceso ganadorEtapa1y2(ES idMax: numero)
+  variables
+    id, max, cant: numero
+  comenzar
+    max:= -1
+    idMax:= 0
+    repetir 3
+      RecibirMensaje(id, *)
+      si(id = 1)
+        RecibirMensaje(cant, r1)
+      sino
+        si(id = 2)
+          RecibirMensaje(cant, r2)
+        sino
+          RecibirMensaje(cant, r3)
+      maximo(cant, max, id, idMax)
+  fin
+areas
+  areaJuego: AreaPC(5,5,7,7)
+  area1: AreaP(5,4,5,4)
+  area2: AreaP(6,4,6,4)
+  area3: AreaP(7,4,7,4)
+  areaEtapa3: AreaPC(10,10,10,10)
+  areaF: AreaP(1,1,1,1)
+robots
+  robot jugador
+  variables
+    id, flores, papeles: numero
+    ok: boolean
+  comenzar
+    RecibirMensaje(id, rf)
+    flores:= 0
+    papeles:= 0
+    Pos(PosAv, PosCa+1)
+    recorrerAvenida(flores)
+    EnviarMensaje(id, rf)
+    EnviarMensaje(flores, rf)
+    RecibirMensaje(ok, rf)
+    si(id = 1)
+      Pos(PosCa,5)
+    sino
+      si(id = 2)
+        Pos(PosCa,PosAv)
+    recorrerCalle(papeles)
+    EnviarMensaje(id, rf)
+    EnviarMensaje(papeles, rf)
+    RecibirMensaje(ok, rf)
+    depositarUno(papeles, flores)
+    EnviarMensaje(id, rf)
+  fin
+  robot fiscalizador
+  variables
+    id, idMax, ganador: numero
+  comenzar
+    enviarIDs
+    ganadorEtapa1y2(idMax)
+    Informar('Ganador_',idMax)
+    siguienteEtapa
+    ganadorEtapa1y2(idMax)
+    Informar('Ganador_', idMax)
+    siguienteEtapa
+    RecibirMensaje(ganador, *)
+    repetir 2
+      RecibirMensaje(id, *)
+    Informar('Ganador_', ganador)
+  fin
+variables
+  r1, r2, r3: jugador
+  rf: fiscalizador
+comenzar
+  AsignarArea(r1, areaJuego)
+  AsignarArea(r1, area1)
+  AsignarArea(r1, areaEtapa3)
+  AsignarArea(r2, areaJuego)
+  AsignarArea(r2, area2)
+  AsignarArea(r2, areaEtapa3)
+  AsignarArea(r3, areaJuego)
+  AsignarArea(r3, area3)
+  AsignarArea(r3, areaEtapa3)
+  AsignarArea(rf, areaF)
+  Iniciar(r1, 5,4)
+  Iniciar(r2, 6,4)
+  Iniciar(r3, 7,4)
+  Iniciar(rf, 1,1)
+fin

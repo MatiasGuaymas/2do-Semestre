@@ -1,0 +1,91 @@
+programa final
+procesos
+  proceso juntarFlores(ES f: numero)
+  comenzar
+    mientras(HayFlorEnLaEsquina)
+      tomarFlor
+      f:= f+1
+  fin
+areas
+  cuadrado: AreaPC(1,1,20,20)
+  areaPerdedor: AreaP(25,25,25,25)
+  area1: AreaP(21,21,21,21)
+  area2: AreaP(22,22,22,22)
+  areaJ: AreaP(23,23,23,23)
+robots
+  robot jugador
+  variables
+    id, av, ca, avAct, caAct, f, floresTotal: numero
+    perdi: boolean
+  comenzar
+    RecibirMensaje(id, rf)
+    avAct:= PosAv
+    caAct:= PosCa
+    floresTotal:= 0
+    repetir 5
+      f:= 0
+      RecibirMensaje(av, rf)
+      RecibirMensaje(ca, rf)
+      BloquearEsquina(av, ca)
+      Pos(av, ca)
+      juntarFlores(f)
+      Pos(avAct, caAct)
+      LiberarEsquina(av, ca)
+      EnviarMensaje(id, rf)
+      EnviarMensaje(f, rf)
+      floresTotal:= floresTotal + f
+    RecibirMensaje(perdi, rf)
+    si(perdi)
+      Pos(25,25)
+      repetir floresTotal
+        depositarFlor
+  fin
+  robot fiscalizador
+  variables
+    id, av, ca, cant1, cant2, f: numero
+  comenzar
+    EnviarMensaje(1, r1)
+    EnviarMensaje(2, r2)
+    cant1:= 0
+    cant2:= 0
+    repetir 5
+      Random(av, 1, 20)
+      EnviarMensaje(av, r1)
+      Random(ca, 1, 20)
+      EnviarMensaje(ca, r1)
+      Random(av, 1, 20)
+      EnviarMensaje(av, r2)
+      Random(ca, 1,20)
+      EnviarMensaje(ca, r2)
+      repetir 2
+        RecibirMensaje(id, *)
+        si(id = 1)
+          RecibirMensaje(f, r1)
+          cant1:= cant1+ f
+        sino
+          RecibirMensaje(f, r2)
+          cant2:= cant2 + f
+    si(cant1 > cant2)
+      Informar('Gano_Jugador',1)
+      EnviarMensaje(F, r1)
+      EnviarMensaje(V, r2)
+    sino
+      Informar('Gano_Jugador2',2)
+      EnviarMensaje(V, r1)
+      EnviarMensaje(F, r2)
+  fin
+variables
+  r1, r2: jugador
+  rf: fiscalizador
+comenzar
+  AsignarArea(r1, area1)
+  AsignarArea(r1, cuadrado)
+  AsignarArea(r1, areaPerdedor)
+  AsignarArea(r2, area2)
+  AsignarArea(r2, cuadrado)
+  AsignarArea(r2, areaPerdedor)
+  AsignarArea(rf, areaJ)
+  Iniciar(r1,21,21)
+  Iniciar(r2,22,22)
+  Iniciar(rf,23,23)
+fin

@@ -1,7 +1,7 @@
 program final;
 type
     pedido = record
-        numero: integer;
+        numRepartidor: integer;
         dirRetiro: string;
         dirEntrega: string;
         monto: real;
@@ -17,7 +17,7 @@ type
         hi: arbol;
         hd: arbol;
     end;
-procedure leerPedido(var p: pedido);
+{procedure leerPedido(var p: pedido);
 begin
     writeln('Ingrese un numero de repartidor');
     readln(p.numero);
@@ -30,49 +30,46 @@ begin
             writeln('Ingrese el monto a cobrar por el servicio');
             readln(p.monto);
         end;
-end;
-{procedure productoRandom(var p: pedido);
+end;}
+procedure productoRandom(var p: pedido);
 begin
-    p.numero:= Random(5)+1;
+    p.numRepartidor:= Random(5)+1;
     p.dirRetiro:= 'aaa';
     p.dirEntrega:= 'bbb';
-    p.monto:= ((Random(30)+1)*(p.numero));
-end;}
+    p.monto:= ((Random(30)+1)*(p.numRepartidor));
+end;
 procedure imprimirPedido(p: pedido);
 begin
-    writeln('NumRepartidor=', p.numero, ' DirRetiro=', p.dirRetiro, ' DirEntrega=', p.dirEntrega, ' Monto=', p.monto:0:2);
+    writeln('NumRepartidor=', p.numRepartidor, ' DirRetiro=', p.dirRetiro, ' DirEntrega=', p.dirEntrega, ' Monto=', p.monto:0:2);
 end;
-
 procedure imprimirRepartidor(r: repartidor);
 begin
     writeln('NumRepartidor=', r.numero, ' CantPedidos=', r.cantPedidos, ' MontoTotal=', r.montoTotal:0:2);
 end;
-
-procedure agregarArbol(var a: arbol; p: pedido);
-var
-    r: repartidor;
+procedure agregarArbol(var a: arbol; num: integer; monto: real);
 begin
-    if(a=nil) then
+    if(a=nil) or (a^.dato.numero = num) then
         begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            r.numero:= p.numero;
-            r.cantPedidos:= 1;
-            r.montoTotal:= p.monto;
-            a^.dato:= r;
+            if(a=nil) then
+                begin
+                    new(a);
+                    a^.hi:= nil;
+                    a^.hd:= nil;
+                    a^.dato.numero := num;
+                    a^.dato.cantPedidos:= 1;
+                    a^.dato.montoTotal:= monto;
+                end
+            else
+                begin
+                    a^.dato.montoTotal:= a^.dato.montoTotal + monto;
+                    a^.dato.cantPedidos:= a^.dato.cantPedidos + 1;
+                end;
         end
     else
-        if(a^.dato.numero = p.numero) then
-            begin
-                a^.dato.cantPedidos:= a^.dato.cantPedidos + 1;
-                a^.dato.montoTotal:= a^.dato.montoTotal + p.monto;
-            end
+        if(num < a^.dato.numero) then
+            agregarArbol(a^.hi, num, monto)
         else
-            if(p.numero < a^.dato.numero) then
-                agregarArbol(a^.hi, p)
-            else
-                agregarArbol(a^.hd, p);
+            agregarArbol(a^.hd, num, monto);
 end;
 
 procedure cargarArbol(var a: arbol);
@@ -80,21 +77,20 @@ var
     p: pedido;
     i: integer;
 begin
-    leerPedido(p);
+    {leerPedido(p);
     while(p.dirEntrega <> 'ZZZ') do
         begin
             imprimirPedido(p);
-            agregarArbol(a, p);
+            agregarArbol(a, p.numero, p.monto);
             leerPedido(p);
-        end;
-    {for i:= 1 to Random(6)+5 do
+        end;}
+    for i:= 1 to Random(6)+5 do
         begin
             productoRandom(p);
             imprimirPedido(p);
-            agregarArbol(a, p);
-        end;}
+            agregarArbol(a, p.numRepartidor, p.monto);
+        end;
 end;
-
 procedure imprimirArbol(a: arbol);
 begin
     if(a<>nil) then
@@ -104,7 +100,6 @@ begin
             imprimirArbol(a^.hd);
         end;
 end;
-
 function cantMonto(a : arbol; num1, num2 : real) : integer;
 begin
 	if(a <> nil) then
