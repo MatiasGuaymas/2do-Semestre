@@ -66,4 +66,5 @@ public class Surtidor {
     public String toString() {
         return "Combustible=" + this.nombreCombustible + " Precio por Litro=" + this.precioLitro + " Ventas: " + this.concatenador();
     }
+    
 }
