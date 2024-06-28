@@ -1,169 +1,139 @@
 program parcial1;
 type
+    subMes = 0..12;
     subCode = 1..15;
-    atencion = record
+    registroLectura = record
         dni: integer;
-        mes: integer;
-        code: subCode;
+        mes: subMes;
+        codigo: subCode;
     end;
-    cliente = record
+    registroPaciente = record
         dni: integer;
         cant: integer;
     end;
     arbol = ^nodo;
     nodo = record
-        dato: cliente;
+        dato: registroPaciente;
         hi: arbol;
         hd: arbol;
     end;
-    vecCode = array [subCode] of integer;
-procedure inicializarVector(var v: vecCode);
-var
-    i: subCode;
+    vecDiagnostico = array [subCode] of integer;
+procedure leerAtencion(var r: registroLectura);
 begin
-    for i:= 1 to 15 do v[i]:= 0;
-end;
-{procedure leerAtencion(a: atencion);
-begin
-    writeln('Ingrese el dni del paciente');
-    readln(a.dni);
-    writeln('Ingrese el numero de mes');
-    readln(a.mes);
-    if(a.mes <> 0) then
+    r.mes:= Random(13);
+    if(r.mes<>0) then
         begin
-            writeln('Ingrese el codigo del diagnostico');
-            readln(a.code);
+            r.dni:= Random(10)+1;
+            r.codigo:= Random(15)+1;
         end;
-end;}
-procedure cargarArbol(var a: arbol; at: atencion);
-var
-    c: cliente;
+end;
+procedure agregarArbol(var a: arbol; dni: integer);
 begin
-    if(a=nil) then
+    if(a=nil) or (a^.dato.dni = dni) then
         begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            c.dni:= at.dni;
-            c.cant:= 1;
-            a^.dato:= c;
+            if(a=nil) then
+                begin
+                    new(a);
+                    a^.hi:= nil;
+                    a^.hd:= nil;
+                    a^.dato.dni:= dni;
+                    a^.dato.cant:= 0;
+                end;
+            a^.dato.cant:= a^.dato.cant + 1;
         end
     else
-        if(at.dni = a^.dato.dni) then
-            a^.dato.cant:= a^.dato.cant + 1
+        if(dni < a^.dato.dni) then
+            agregarArbol(a^.hi, dni)
         else
-            if(at.dni < a^.dato.dni) then
-                cargarArbol(a^.hi, at)
-            else
-                cargarArbol(a^.hd, at);
+            agregarArbol(a^.hd, dni);
 end;
-procedure imprimirPaciente(c: cliente);
-begin
-    writeln('DNI=', c.dni, ' CANT=', c.cant);
-end;
-procedure cargarEstructuras(var a: arbol; var v: vecCode);
+procedure cargarEstructuras(var a: arbol; var v: vecDiagnostico);
 var
-    at: atencion;
-    i: integer;
+    reg: registroLectura;
 begin
-    inicializarVector(v);
-   { leerAtencion(at);
-    while(at.mes <> 0) do
+    leerAtencion(reg);
+    while(reg.mes <> 0) do
         begin
-            v[at.code]:= v[at.code] + 1;
-            cargarArbol(a, at);
-            leerAtencion(at);
-        end;}
-    for i:= 1 to Random(10)+5 do
-        begin
-            at.dni:= Random(10)+1;
-            at.mes:= Random(12)+1;
-            at.code:= Random(15)+1;
-            v[at.code]:= v[at.code] + 1;
-            writeln('DNI=', at.dni, ' MES=', at.mes, ' CODE=', at.code);
-            cargarArbol(a, at);
+            v[reg.mes] := v[reg.mes] + 1;
+            agregarArbol(a, reg.dni);
+            leerAtencion(reg);
         end;
 end;
-procedure entreDosValores(a: arbol; num1, num2, cant: integer; var aux: integer);
+procedure entreDosValores(a: arbol; dni1, dni2, x: integer; var cantPacientes: integer);
 begin
-	if(a<>nil) then
-		begin
-			if(a^.dato.dni > num1) and (a^.dato.dni < num2) then
-				begin
-					if(a^.dato.cant = cant) then
-						aux:= aux+1;
-					entreDosValores(a^.hi, num1, num2, cant, aux);
-					entreDosValores(a^.hd, num1, num2, cant, aux);
-				end
-			else
-				if(a^.dato.dni > num1) then
-					entreDosValores(a^.hi, num1, num2, cant, aux)
-				else
-					entreDosValores(a^.hd, num1, num2, cant, aux);
-		end;
+    if(a<>nil) then
+        begin
+            if(a^.dato.dni > dni1) and (a^.dato.dni < dni2) then
+                begin
+                    if(a^.dato.cant > x) then
+                        cantPacientes:= cantPacientes + 1;
+                    entreDosValores(a^.hi, dni1, dni2, x, cantPacientes);
+                    entreDosValores(a^.hd, dni1, dni2, x, cantPacientes);
+                end
+            else
+                if(a^.dato.dni > dni1) then
+                    entreDosValores(a^.hi, dni1, dni2, x, cantPacientes)
+                else
+                    entreDosValores(a^.hd, dni1, dni2, x, cantPacientes);
+        end;
+end;
+function diagnosticoCero(v: vecDiagnostico; dim: integer): integer;
+begin
+    if(dim > 0) then
+        begin
+            if(v[dim] = 0) then
+                diagnosticoCero:= diagnosticoCero(v, dim-1) + 1
+            else
+                diagnosticoCero:= diagnosticoCero(v, dim-1);
+        end
+    else
+        diagnosticoCero:= 0;
+end;
+procedure imprimirNodo(r: registroPaciente);
+begin
+    writeln('DNI=', r.dni, ' CANT=', r.cant);
 end;
 procedure imprimirArbol(a: arbol);
 begin
     if(a<>nil) then
         begin
             imprimirArbol(a^.hi);
-            imprimirPaciente(a^.dato);
+            imprimirNodo(a^.dato);
             imprimirArbol(a^.hd);
         end;
 end;
-procedure imprimirVector(v: vecCode);
+procedure inicializarVector(var v: vecDiagnostico);
 var
-    i: integer;
+    i: subCode;
 begin
-    for i:= 1 to 15 do begin
-        writeln(i, '. ', v[i]);
-    end;
+    for i:= 1 to 15 do v[i] := 0;
 end;
-function atencionesCero(v:vecCode; cant, dim:integer):integer;
+procedure imprimirVector(v: vecDiagnostico);
+var
+    i: subCode;
 begin
-    if (dim = 0) then
-        atencionesCero := cant
-    else
-        begin
-            if(v[dim] = 0) then
-                cant:= cant + 1;
-            atencionesCero:= atencionesCero(v, cant, dim-1);
-        end;
+    for i:= 1 to 15 do writeln(i, '. ', 'CANT=', v[i]);
 end;
-{function atencionesCeroV2(v:vecCode; dim:integer):integer;
-begin
-    if (dim = 0) then
-        atencionesCeroV2 := 0
-    else
-        begin
-            atencionesCeroV2:= atencionesCeroV2(v, dim-1);
-            if(v[dim] = 0) then
-                atencionesCeroV2:= atencionesCeroV2 + 1;
-        end;
-end;}
 var
     a: arbol;
-    v: vecCode;
-    num1, num2, x, cant, dim: integer;
+    v: vecDiagnostico;
+    dni1, dni2, cant, x: integer;
 begin
     Randomize;
     a:= nil;
+    inicializarVector(v);
     cargarEstructuras(a, v);
-    writeln('---------------');
     imprimirArbol(a);
-    writeln('Ingrese un primer numero de DNI');
-    readln(num1);
-    writeln('Ingrese un segundo numero de DNI');
-    readln(num2);
-    writeln('Ingrese un valor entero X');
-    readln(x);
-    cant:= 0;
-    entreDosValores(a, num1, num2, x, cant);
-    writeln('La cantidad de pacientes con mas de ', x, ' consultas cuyo DNI esta entre ', num1, ' y ', num2, ' es: ', cant);
-    writeln('---------------');
+    writeln();
     imprimirVector(v);
+    writeln('Ingrese un primer numero de dni');
+    readln(dni1);
+    writeln('Ingrese un segundo numero de dni');
+    readln(dni2);
     cant:= 0;
-    dim:= 15;
-    writeln('La cantidad de diagnosticos para los cuales la cantidad de atenciones fue cero es: ', atencionesCero(v, cant, dim));
-    //writeln('V2: La cantidad de diagnosticos para los cuales la cantidad de atenciones fue cero es: ', atencionesCeroV2(v, dim));
+    writeln('Ingrese una cantidad');
+    readln(x);
+    entreDosValores(a, dni1, dni2, x, cant);
+    writeln('Entre el dni ', dni1, ' y el dni ', dni2, ' la cantidad de pacientes con mas de ', x, ' atenciones fue: ', cant);
+    writeln('La cantidad de diagnosticos para los cuales la cantidad de atenciones fue cero es: ', diagnosticoCero(v, 15));
 end.

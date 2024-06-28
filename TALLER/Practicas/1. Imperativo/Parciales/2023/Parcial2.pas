@@ -1,90 +1,84 @@
 program parcial2;
 type
-    compra = record
+    subMes = 1..12;
+    registroLectura = record
         codigo: integer;
-        mes: integer;
+        mes: subMes;
         monto: real;
     end;
-    vecMonto = array [1..12] of real;
-    cliente = record
+    vecMonto = array[subMes] of real;
+    registroArbol = record
         codigo: integer;
-        monto: vecMonto;
+        vec: vecMonto;
     end;
     arbol = ^nodo;
     nodo = record
-        dato: cliente;
+        dato: registroArbol;
         hi: arbol;
         hd: arbol;
     end;
-procedure inicializarVector(var v: vecMonto); 
+procedure leerCompra(var r: registroLectura);
+begin
+    r.codigo:= Random(10);
+    if(r.codigo <> 0) then
+        begin
+            r.mes:= Random(12)+1;
+            r.monto:= r.codigo * 30;
+        end;
+end;
+procedure inicializarVector(var v: vecMonto);
 var
-    i: integer;
+    i: subMes;
 begin
     for i:= 1 to 12 do v[i]:= 0;
 end;
-procedure agregarArbol(var a: arbol; c: compra);
-var
-    cli: cliente;
+procedure agregarArbol(var a, h: arbol; codigo: integer);
 begin
-    if(a = nil) then    
+    if(a=nil) or (a^.dato.codigo = codigo) then
         begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            cli.codigo:= c.codigo;
-            inicializarVector(cli.monto);
-            cli.monto[c.mes]:= cli.monto[c.mes] + c.monto;
-            a^.dato:= cli;
+            if(a=nil) then
+                begin
+                    new(a);
+                    a^.hi:= nil;
+                    a^.hd:= nil;
+                    a^.dato.codigo:= codigo;
+                    inicializarVector(a^.dato.vec);
+                end;
+            h:= a;
         end
     else
-        if(a^.dato.codigo = c.codigo) then
-            a^.dato.monto[c.mes]:= a^.dato.monto[c.mes] + c.monto
+        if(codigo < a^.dato.codigo) then
+            agregarArbol(a^.hi, h, codigo)
         else
-            if(c.codigo < a^.dato.codigo) then
-                agregarArbol(a^.hi, c)
-            else
-                agregarArbol(a^.hd, c);
+            agregarArbol(a^.hd, h, codigo);
 end;
-procedure imprimirCompra(c: compra);
+procedure agregarMonto(var v: vecMonto; monto: real; mes: integer);
 begin
-    writeln('CODIGO=', c.codigo, ' MES=', c.mes, ' MONTO=', c.monto:0:2);
+    v[mes]:= v[mes] + monto;
+end;
+procedure imprimirCompra(r: registroLectura);
+begin
+    writeln('CODIGO=', r.codigo, ' MES=', r.mes, ' MONTO=', r.monto:0:2);
 end;
 procedure cargarArbol(var a: arbol);
 var
-    c: compra;
-    i: integer;
+    reg: registroLectura;
+    hoja: arbol;
 begin
-    for i:= 1 to Random(10)+5 do
+    leerCompra(reg);
+    //imprimirCompra(reg);
+    while(reg.codigo <> 0 ) do
         begin
-            c.codigo:= Random(10)+1;
-            c.mes:= Random(12)+1;
-            c.monto:= c.mes * ((Random(20)) * 3);
-            imprimirCompra(c);
-            agregarArbol(a, c);
+            agregarArbol(a, hoja, reg.codigo);
+            agregarMonto(hoja^.dato.vec, reg.monto, reg.mes);
+            leerCompra(reg);
+            //imprimirCompra(reg);
         end;
 end;
-procedure imprimirCliente(c: cliente);
+procedure evaluarMax(v: vecMonto; var mesMax: subMes);
 var
-    i: integer;
-begin
-    write('CODIGO=', c.codigo,' MONTO=');
-    for i:= 1 to 12 do
-        write(i, '. ', c.monto[i]:0:2,' ');
-    writeln();
-end;
-procedure imprimirArbol(a: arbol);
-begin
-    if(a<>nil) then
-        begin
-            imprimirArbol(a^.hi);
-            imprimirCliente(a^.dato);
-            imprimirArbol(a^.hd);
-        end;
-end;
-procedure max(v: vecMonto; var maxMes: integer);
-var
-    i: integer;
     max: real;
+    i: subMes;
 begin
     max:= -1;
     for i:= 1 to 12 do
@@ -92,52 +86,70 @@ begin
             if(v[i] > max) then
                 begin
                     max:= v[i];
-                    maxMes:= i;
-                end;
+                    mesMax:= i;
+            end;
         end;
 end;
-procedure calcularMax(a: arbol; num1: integer; var maxMes: integer);
+procedure mayorMesCliente(a: arbol; codigo: integer; var mesMax: subMes);
 begin
     if(a<>nil) then
         begin
-            if(a^.dato.codigo = num1) then
-                max(a^.dato.monto, maxMes)
+            if(a^.dato.codigo = codigo) then
+                evaluarMax(a^.dato.vec, mesMax)
             else
-                if(num1 < a^.dato.codigo) then
-                    calcularMax(a^.hi, num1, maxMes)
+                if(codigo < a^.dato.codigo) then
+                    mayorMesCliente(a^.hi, codigo, mesMax)
                 else
-                    calcularMax(a^.hd, num1, maxMes);
+                    mayorMesCliente(a^.hd, codigo, mesMax);
         end;
 end;
-procedure calcularMes(a: arbol; mes: integer; var cant: integer);
+procedure ningunGastoMes(a: arbol; mes: subMes; var cantCero: integer);
 begin
     if(a<>nil) then
         begin
-            if(a^.dato.monto[mes] = 0) then
-                cant:= cant + 1;
-            calcularMes(a^.hi, mes, cant);
-            calcularMes(a^.hd, mes, cant);
+            if(a^.dato.vec[mes] = 0) then
+                cantCero:= cantCero + 1;
+            ningunGastoMes(a^.hi, mes, cantCero);
+            ningunGastoMes(a^.hd, mes, cantCero);
+        end;
+end;
+procedure imprimirVector(v: vecMonto);
+var
+    i: subMes;
+begin
+    for i:= 1 to 12 do write(i, '. ', v[i]:0:2, ' - ');
+end;
+procedure imprimirNodo(r: registroArbol);
+begin
+    write('CODIGO=' , r.codigo, ' MONTOS=');
+    imprimirVector(r.vec);
+    writeln();
+end;
+procedure imprimirArbol(a: arbol);
+begin
+    if(a<>nil) then
+        begin
+            imprimirArbol(a^.hi);
+            imprimirNodo(a^.dato);
+            imprimirArbol(a^.hd);
         end;
 end;
 var
     a: arbol;
-    num1, cant, mesMax: integer;
+    codigo, cantCero: integer;
+    mesMax, mes: subMes;
 begin
     Randomize;
     a:= nil;
     cargarArbol(a);
-    writeln('-------------');
     imprimirArbol(a);
-    writeln('-------------');
-    writeln('Ingrese un numero de cliente');
-    readln(num1);
-    mesMax:= -1;
-    calcularMax(a, num1, mesMax);
-    writeln('El mes con mayor gasto del cliente con codigo ', num1, ' es: ', mesMax);
-    writeln('-------------');
+    writeln('Ingrese un codigo de cliente');
+    readln(codigo);
+    mayorMesCliente(a, codigo, mesMax);
+    writeln('El mes con mayor gasto del cliente con codigo ', codigo, ' fue el numero: ', mesMax);
     writeln('Ingrese un numero de mes');
-    readln(num1);
-    cant:= 0;
-    calcularMes(a, num1, cant);
-    writeln('Para el mes ', num1, ' la cantidad de clientes que no gastaron en dicho mes es: ', cant);
+    readln(mes);
+    cantCero:= 0;
+    ningunGastoMes(a, mes, cantCero);
+    writeln('La cantidad de clientes que no gastaron nada en dicho mes es: ', cantCero);
 end.

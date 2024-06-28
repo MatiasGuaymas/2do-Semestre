@@ -1,120 +1,143 @@
 program parcial4;
 type
-    compra = record
+    registroLectura = record
         codigo: integer;
-        numero: integer;
+        factura: integer;
         cant: integer;
         monto: real;
     end;
-    compra2 = record
-        numero: integer;
+    registroLista = record
+        factura: integer;
         cant: integer;
         monto: real;
     end;
-    lista = ^nodo;
-    nodo = record
-        dato: compra2;
+    lista = ^nodoLista;
+    nodoLista = record
+        dato: registroLista;
         sig: lista;
     end;
-    cliente = record
+    registroArbol = record
         codigo: integer;
         l: lista;
     end;
     arbol = ^nodoArbol;
     nodoArbol = record
-        dato: cliente;
+        dato: registroArbol;
         hi: arbol;
         hd: arbol;
     end;
-{procedure leerCompra(var c: compra);
+procedure leerCompra(var r: registroLectura);
 begin
-    writeln('Ingrese el codigo de cliente');
-    readln(c.codigo);
-    if(c.codigo <> 0) then
+    r.codigo:= Random(20);
+    if(r.codigo <> 0) then
         begin
-            writeln('Ingrese el numero de factura');
-            readln(c.numero);
-            writeln('Ingrese la cantidad de productos vendidos');
-            readln(c.cant);
-            writeln('Ingrese el monto');
-            readln(c.monto);
+            r.factura:= Random(50)+1;
+            r.cant:= Random(10)+5;
+            r.monto:= r.cant * 25;
         end;
-end;}
-procedure productoRandom(var c: compra);
-begin
-    c.codigo:= Random(7)+1;
-    c.numero:= Random(20)+1;
-    c.cant:= Random(15)+5;
-    c.monto:= c.cant * (Random(10)+1);
 end;
-procedure imprimirCompra(c: compra);
+procedure buscarHoja(var a, h: arbol; codigo: integer);
 begin
-    writeln('CODE=', c.codigo, ' NUMFACTURA=', c.numero,' CANT=', c.cant, ' MONTO=', c.monto:0:2);
+    if(a=nil) or (a^.dato.codigo = codigo) then
+        begin
+            if(a=nil) then
+                begin
+                    new(a);
+                    a^.hi:= nil;
+                    a^.hd:= nil;
+                    a^.dato.codigo:= codigo;
+                    a^.dato.l:= nil;
+                end;
+            h:= a;
+        end
+    else
+        if(codigo < a^.dato.codigo) then
+            buscarHoja(a^.hi, h, codigo)
+        else
+            buscarHoja(a^.hd, h, codigo);
 end;
-procedure agregarAdelante(var l: lista; c: compra2);
+procedure convertirRegistro(reg: registroLectura; var regL: registroLista);
+begin
+    regL.factura:= reg.factura;
+    regL.monto:= reg.monto;
+    regL.cant:= reg.cant;
+end;
+procedure agregarAdelante(var l: lista; reg: registroLista);
 var
     aux: lista;
 begin
     new(aux);
     aux^.sig:= l;
     l:= aux;
-    aux^.dato:= c;
-end;
-procedure agregarArbol(var a: arbol; c: compra);
-var
-    com: compra2;
-begin
-    if(a = nil) then
-        begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            a^.dato.codigo:= c.codigo;
-            a^.dato.l:= nil;
-            com.numero:= c.numero;
-            com.cant:= c.cant;
-            com.monto:= c.monto;
-            agregarAdelante(a^.dato.l, com);
-        end
-    else
-        if(a^.dato.codigo = c.codigo) then
-            begin
-                com.numero:= c.numero;
-                com.cant:= c.cant;
-                com.monto:= c.monto;
-                agregarAdelante(a^.dato.l, com)
-            end
-        else
-            if(c.codigo < a^.dato.codigo) then
-                agregarArbol(a^.hi, c)
-            else
-                agregarArbol(a^.hd, c);
+    aux^.dato:= reg;
 end;
 procedure cargarArbol(var a: arbol);
 var
-    c: compra;
-    i: integer;
+    reg: registroLectura;
+    regL: registroLista;
+    hoja: arbol;
 begin
-    //leerCompra(c); Hacer con un while el ir cargando al arbol...
-    for i:= 1 to Random(15)+5 do
+    leerCompra(reg);
+    while(reg.codigo <> 0 ) do
         begin
-            productoRandom(c);
-            imprimirCompra(c);
-            agregarArbol(a, c);
+            buscarHoja(a, hoja, reg.codigo);
+            convertirRegistro(reg, regL);
+            agregarAdelante(hoja^.dato.l, regL);
+            leerCompra(reg);
+        end;
+end;
+procedure clienteLista(l: lista; var cantTotal: integer; var montoTotal: real);
+begin
+    while(l<>nil) do
+        begin
+            cantTotal:= cantTotal + l^.dato.cant;
+            montoTotal:= montoTotal + l^.dato.monto;
+            l:= l^.sig;
+        end;
+end;
+procedure clienteCompras(a: arbol; codigo: integer; var cantTotal: integer; var montoTotal: real);
+begin
+    if(a<>nil) then
+        begin
+            if(a^.dato.codigo = codigo) then
+                clienteLista(a^.dato.l, cantTotal, montoTotal)
+            else
+                if(codigo < a^.dato.codigo) then
+                    clienteCompras(a^.hi, codigo, cantTotal, montoTotal)
+                else
+                    clienteCompras(a^.hd, codigo, cantTotal, montoTotal);
+        end;
+end;
+procedure evaluarLista(l: lista; factura1, factura2: integer; var lisVentas: lista);
+begin
+    while(l<>nil) do
+        begin
+            if(l^.dato.factura >= factura1) and (l^.dato.factura <= factura2) then
+                agregarAdelante(lisVentas, l^.dato);
+            l:= l^.sig;
+        end;
+end;
+procedure entreDosFacturas(a: arbol; factura1, factura2: integer; var lisVentas: lista);
+begin
+    if(a<>nil) then
+        begin
+            evaluarLista(a^.dato.l, factura1, factura2, lisVentas);
+            entreDosFacturas(a^.hi, factura1, factura2, lisVentas);
+            entreDosFacturas(a^.hd, factura1, factura2, lisVentas);
         end;
 end;
 procedure imprimirLista(l: lista);
 begin
     while(l<>nil) do
         begin
-            write(' | NUMFACTURA=', l^.dato.numero,' CANT=', l^.dato.cant, ' MONTO=', l^.dato.monto:0:2);
+            write('FACTURA=', l^.dato.factura, ' CANT=', l^.dato.cant, ' MONTO=', l^.dato.monto:0:2, ' - ');
             l:= l^.sig;
         end;
 end;
-procedure imprimirCliente(c: cliente);
+procedure imprimirNodo(r: registroArbol);
 begin
-    write('CODIGO=', c.codigo);
-    imprimirLista(c.l);
+    write('CODIGO=', r.codigo, ' Lista:');
+    imprimirLista(r.l);
     writeln();
 end;
 procedure imprimirArbol(a: arbol);
@@ -122,30 +145,8 @@ begin
     if(a<>nil) then
         begin
             imprimirArbol(a^.hi);
-            imprimirCliente(a^.dato);
+            imprimirNodo(a^.dato);
             imprimirArbol(a^.hd);
-        end;
-end;
-procedure calcularCompras(l: lista; var cant: integer; var monto: real);
-begin
-    while(l<>nil) do
-        begin
-            monto:= monto + l^.dato.monto;
-            cant:= cant + 1;
-            l:= l^.sig;
-        end;
-end;
-procedure calcularCantMonto(a: arbol; codigo: integer; var cant: integer; var monto: real);
-begin
-    if(a <> nil) then
-        begin
-            if(a^.dato.codigo = codigo) then
-                calcularCompras(a^.dato.l, cant, monto)
-            else
-                if(codigo < a^.dato.codigo) then
-                    calcularCantMonto(a^.hi, codigo, cant, monto)
-                else
-                    calcularCantMonto(a^.hd, codigo, cant, monto)
         end;
 end;
 procedure verificar(var num1, num2: integer);
@@ -159,48 +160,29 @@ begin
             num2:= aux;
         end;
 end;
-procedure generarLista(l: lista; num1, num2: integer; var lisNueva: lista);
-begin
-    while(l<>nil) do
-        begin
-            if(l^.dato.numero >= num1) and (l^.dato.numero <= num2) then
-                agregarAdelante(lisNueva, l^.dato);
-            l:= l^.sig;
-        end;
-end;
-procedure listaEntreDosValores(a: arbol; num1, num2: integer; var l: lista);
-begin
-    if(a<>nil) then
-        begin
-            generarLista(a^.dato.l, num1, num2, l); 
-            listaEntreDosValores(a^.hi, num1, num2, l);
-            listaEntreDosValores(a^.hd, num1, num2, l);
-        end;
-end;
 var
     a: arbol;
-    codigo, cant, x, y: integer;
-    monto: real;
     l: lista;
+    cantTotal, f1, f2, codigo: integer;
+    montoTotal: real;
 begin
+    Randomize;
     a:= nil;
     cargarArbol(a);
-    writeln('---------------');
     imprimirArbol(a);
-    writeln('---------------');
     writeln('Ingrese un codigo de cliente');
     readln(codigo);
-    cant:= 0;
-    monto:= 0;
-    calcularCantMonto(a, codigo, cant, monto);
-    writeln('El cliente con codigo ', codigo, ' hizo ', cant, ' compras y gasto: ', monto:0:2);
-    writeln('---------------');
+    cantTotal:= 0;
+    montoTotal:= 0;
+    clienteCompras(a, codigo, cantTotal, montoTotal);
+    writeln('El cliente con codigo ', codigo, ' gasto un total de ', montoTotal:0:2, ' en ', cantTotal, ' compras durante el 2023');
     l:= nil;
-    writeln('Ingrese un primer codigo de factura');
-    readln(x);
-    writeln('Ingrese un segundo codigo de factura');
-    readln(y);
-    verificar(x, y);
-    listaEntreDosValores(a, x, y, l);
+    writeln('Ingrese un primer numero de factura');
+    readln(f1);
+    writeln('Ingrese un segundo numero de factura');
+    readln(f2);
+    verificar(f1, f2);
+    entreDosFacturas(a, f1, f2, l);
+    writeln('Lista de las ventas entre las facturas con numero ', f1, ' y ', f2, ':');
     imprimirLista(l);
 end.

@@ -1,176 +1,170 @@
 program parcial3;
 type
-    pasaje = record
-        codeVuelo: integer;
-        codeCliente: integer;
-        codeCiudad: integer;
+    registroLectura = record
+        vuelo: integer;
+        cliente: integer;
+        destino: integer;
         monto: real;
     end;
-    pasaje2 = record
-        codeVuelo: integer;
-        codeCliente: integer;
+    registroLista = record
+        vuelo: integer;
+        cliente: integer;
         monto: real;
     end;
-    lista = ^nodo;
-    nodo = record
-        dato: pasaje2;
+    lista = ^nodoLista;
+    nodoLista = record
+        dato: registroLista;
         sig: lista;
     end;
-    ciudad = record
-        codeCiudad: integer;
+    regArbol = record
         l: lista;
+        destino: integer;
     end;
     arbol = ^nodoArbol;
     nodoArbol = record
-        dato: ciudad;
+        dato: regArbol;
         hi: arbol;
         hd: arbol;
     end;
-procedure agregarAdelante(var l: lista; p: pasaje2);
+procedure leerPasaje(var reg: registroLectura);
+begin
+    reg.monto:= Random(20);
+    if(reg.monto <> 0) then
+        begin
+            reg.vuelo:= Random(50) + 1;
+            reg.destino:= Random(10) + 1;
+            reg.cliente:= Random(5000) + 1;
+        end;
+end;
+procedure buscarHoja(var a, h: arbol; destino: integer);
+begin
+    if(a = nil) or (a^.dato.destino = destino) then
+        begin
+            if(a = nil) then
+                begin
+                    new(a);
+                    a^.hi:= nil;
+                    a^.hd:= nil;
+                    a^.dato.l:= nil;
+                    a^.dato.destino := destino;
+                end;
+            h:= a;
+        end
+    else
+        if(destino < a^.dato.destino) then
+            buscarHoja(a^.hi, h, destino)
+        else
+            buscarHoja(a^.hd, h, destino);
+end;
+procedure reasignarRegistro(reg: registroLectura; var regL: registroLista);
+begin
+    regL.monto:= reg.monto;
+    regL.vuelo:= reg.vuelo;
+    regL.cliente:= reg.cliente;
+end;
+procedure agregarAdelante(var l: lista; reg: registroLista);
 var
     aux: lista;
 begin
-    new(aux);
-    aux^.dato:= p;
-    aux^.sig:= l;
-    l:= aux;
-end;
-procedure agregarArbol(var a: arbol; p: pasaje);
-var
-    pas: pasaje2;
-begin
-    if( a = nil) then
-        begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            a^.dato.l:= nil;
-            a^.dato.codeCiudad:= p.codeCiudad;
-            pas.codeVuelo:= p.codeVuelo;
-            pas.codeCliente:= p.codeCliente;
-            pas.monto:= p.monto;
-            agregarAdelante(a^.dato.l, pas);
-        end
+    new(aux); aux^.sig:= nil; aux^.dato:= reg;
+    if(l=nil) then l:= aux
     else
-        if(a^.dato.codeCiudad = p.codeCiudad) then
-            begin
-                pas.codeVuelo:= p.codeVuelo;
-                pas.codeCliente:= p.codeCliente;
-                pas.monto:= p.monto;
-                agregarAdelante(a^.dato.l, pas);
-            end
-        else
-            if(p.codeCiudad < a^.dato.codeCiudad) then
-                agregarArbol(a^.hi, p)
-            else
-                agregarArbol(a^.hd, p);
+        begin
+            aux^.sig:= l;
+            l:= aux;
+        end;
 end;
 procedure cargarArbol(var a: arbol);
 var
-    p: pasaje;
-    i: integer;
+    reg: registroLectura;
+    regL: registroLista;
+    hoja: arbol;
 begin
-    for i:= 1 to Random(12)+5 do
+    leerPasaje(reg);
+    while(reg.monto <> 0) do
         begin
-            p.codeVuelo:= Random(30)+1;
-            p.codeCliente:= Random(20)+1;
-            p.codeCiudad:= Random(5)+1;
-            p.monto:= ((Random(5)+1) * p.codeCliente);
-            writeln('VUELO=', p.codeVuelo, ' CODECLI=', p.codeCliente, ' CODECIUDAD=', p.codeCiudad, ' MONTO=', p.monto:0:2);
-            agregarArbol(a, p);
+            buscarHoja(a, hoja, reg.destino);
+            reasignarRegistro(reg, regL);
+            agregarAdelante(hoja^.dato.l, regL);
+            leerPasaje(reg);
+        end;
+end;
+procedure listaPasajes(a: arbol; destino: integer; var l: lista);
+begin
+    if(a<>nil) then
+        begin
+            if(a^.dato.destino = destino) then
+                l:= a^.dato.l
+            else
+                if(destino < a^.dato.destino) then
+                    listaPasajes(a^.hi, destino, l)
+                else
+                    listaPasajes(a^.hd, destino, l);
+        end;
+end;
+function calcularPasajes(l: lista): integer;
+begin
+    if(l <> nil) then
+        calcularPasajes:= calcularPasajes(l^.sig) + 1
+    else
+        calcularPasajes:= 0;
+end;
+procedure cantMaxPasajes(a: arbol; var codMax: integer; var cantMax: integer);
+var
+    cant: integer;
+begin
+    if(a<>nil) then
+        begin
+            cant:= calcularPasajes(a^.dato.l);
+            if(cant > cantMax) then
+                begin
+                    cantMax:= cant;
+                    codMax:= a^.dato.destino;
+                end;
+            cantMaxPasajes(a^.hi, codMax, cantMax);
+            cantMaxPasajes(a^.hd, codMax, cantMax);
         end;
 end;
 procedure imprimirLista(l: lista);
 begin
-    while(l <> nil) do
+    while(l<>nil) do
         begin
-            write(' | VUELO=', l^.dato.codeVuelo, ' CODECLI=', l^.dato.codeCliente, ' MONTO=', l^.dato.monto:0:2);
+            write('Vuelo=', l^.dato.vuelo, ' Cliente=', l^.dato.cliente, ' Monto=', l^.dato.monto:0:2, ' - ');
             l:= l^.sig;
         end;
 end;
-procedure imprimirCiudad(c: ciudad);
+procedure imprimirNodo(dato: regArbol);
 begin
-    write('CODE=', c.codeCiudad);
-    imprimirLista(c.l);
+    write('Destino=', dato.destino, ':');
+    imprimirLista(dato.l);
     writeln();
 end;
 procedure imprimirArbol(a: arbol);
 begin
-    if (a<>nil) then
+    if(a<>nil) then
         begin
             imprimirArbol(a^.hi);
-            imprimirCiudad(a^.dato);
+            imprimirNodo(a^.dato);
             imprimirArbol(a^.hd);
         end;
 end;
-procedure obtenerLista(a: arbol; codigoCiudad: integer; var l: lista);
-begin
-    if(a<>nil) then
-        begin
-            if(a^.dato.codeCiudad = codigoCiudad) then
-                l:= a^.dato.l
-            else 
-                if(codigoCiudad < a^.dato.codeCiudad) then
-                    obtenerLista(a^.hi, codigoCiudad, l)
-                else
-                    obtenerLista(a^.hd, codigoCiudad, l);
-        end
-    else
-        l:= nil;
-end;
-
-function obtenerCantidad(var l: lista): integer;
-var
-    cant: integer;
-begin
-    cant:= 0;
-    while(l <> nil) do
-        begin
-            cant:= cant+1;
-            l:= l^.sig;
-        end;
-    obtenerCantidad:= cant;
-end;
-
-procedure maxCant (a:arbol; var codigo: integer; var cantMax: integer);
-var
-	cantActual: integer;
-begin 
-    if (a<>nil) then 
-        begin 
-			cantActual:= obtenerCantidad(a^.dato.l);
-            if (cantActual > cantMax) then 
-				begin
-					cantMax:= cantActual;
-					codigo:= a^.dato.codeCiudad;
-				end;
-            maxCant(a^.hi,codigo, cantMax);
-            maxCant(a^.hd,codigo, cantMax);
-        end;
-end;
-
 var
     a: arbol;
     l: lista;
-    codigo, cantMax, codeMax, cant: integer;
+    code, codeMax, cantMax: integer;
 begin
     Randomize;
     a:= nil;
+    l:= nil;
     cargarArbol(a);
-    writeln('-----------');
     imprimirArbol(a);
-    writeln('-----------');
-    writeln('Ingrese un codigo de ciudad destino');
-    readln(codigo);
-    obtenerLista(a, codigo, l);
-    if(l <> nil) then begin
-        writeln();
-        write('Para el codigo de ciudad destino ', codigo,' todos los pasajes son: ');
-        imprimirLista(l);
-    end; 
+    writeln('Ingrese un codigo de ciudad de destino');
+    readln(code);
+    listaPasajes(a, code, l);
+    writeln('Lista de pasajes de la ciudad de destino con codigo ', code, ':');
+    imprimirLista(l);
     writeln();
-    writeln('-----------');
     cantMax:= -1;
-    maxCant(a, codeMax, cantMax);
+    cantMaxPasajes(a, codeMax, cantMax);
     writeln('El codigo de ciudad de destino con mayor cantidad de pasajes vendidos es: ', codeMax);
 end.

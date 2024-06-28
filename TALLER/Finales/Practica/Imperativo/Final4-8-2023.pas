@@ -80,7 +80,7 @@ begin
 end;
 procedure construirRegistro(denLeer: denuncia; var denLista: denunciaLista);
 begin
-    denLista.dni:= denLeer.dni;
+    denLista.dni:= 3.dni;
     denLista.direccion:= denLeer.direccion;
     denLista.mes:= denLeer.mes;
     denLista.hora:= denLeer.hora;

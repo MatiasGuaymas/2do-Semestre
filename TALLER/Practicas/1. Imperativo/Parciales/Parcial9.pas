@@ -1,194 +1,192 @@
 program parcial9;
 type
-	pedido = record
+	subDia = 1..31;
+	subMes = 1..12;
+	fec = record	
+		dia: subDia;
+		mes: subMes;
+		anio: integer;
+	end;
+	registroLectura = record
 		dni: integer;
 		nombre: string;
-		fecha: integer;
+		fecha: fec;
 		monto: real;
 	end;
-	data = record
-		fecha: integer;
+	registroLista = record
+		fecha: fec;
 		monto: real;
 	end;
-	lista = ^nodo;
-	nodo = record
-		dato: data;
+	lista = ^nodoLista;
+	nodoLista = record
+		dato: registroLista;
 		sig: lista;
 	end;
-	cliente = record
+	registroArbol = record
 		dni: integer;
 		nombre: string;
 		l: lista;
 	end;
 	arbol = ^nodoArbol;
 	nodoArbol = record
-		dato: cliente;
+		dato: registroArbol;
 		hi: arbol;
 		hd: arbol;
 	end;
-{procedure leerPedido(var p: pedido);
+procedure leerPedido(var r: registroLectura);
 begin
-	writeln('Ingrese el monto a abonar por el pedido');
-	readln(p.monto);
-	if(p.monto <> 0) then
+	r.monto:= Random(15);
+	if(r.monto <> 0) then
 		begin
-			writeln('Ingrese el DNI del cliente');
-			readln(p.dni);
-			writeln('Ingrese el nombre del cliente');
-			readln(p.nombre);
-			writeln('Ingrese la fecha del pedido');
-			readln(p.fecha);
+			writeln('Ingrese un dni');
+			readln(r.dni);
+			writeln('Ingrese un nombre');
+			readln(r.nombre);
+			r.fecha.dia:= Random(31)+1;
+			r.fecha.mes:= Random(12)+1;
+			r.fecha.anio:= Random(24)+2000;
 		end;
-end;}
-procedure agregarAdelante(var l: lista; d: data);
+end;
+procedure buscarHoja(var a, h: arbol; dni: integer; nombre: string);
+begin
+	if(a=nil) or (a^.dato.dni = dni) then
+		begin
+			if(a = nil) then
+				begin
+					new(a);
+					a^.hi:= nil;
+					a^.hd:= nil;
+					a^.dato.l:= nil;
+					a^.dato.dni:= dni;
+					a^.dato.nombre:= nombre;
+				end;
+			h:= a;
+		end
+	else
+		if(dni < a^.dato.dni) then
+			buscarHoja(a^.hi, h, dni, nombre)
+		else
+			buscarHoja(a^.hd, h, dni, nombre);
+end;
+procedure convertirRegistro(reg: registroLectura; var regL: registroLista);
+begin
+	regL.fecha:= reg.fecha;
+	regL.monto:= reg.monto;
+end;
+procedure agregarAdelante(var l: lista; reg: registroLista);
 var
 	aux: lista;
 begin
 	new(aux);
 	aux^.sig:= l;
 	l:= aux;
-	aux^.dato:= d;
-end;
-procedure agregarArbol(var a: arbol; p: pedido);
-var
-	d: data;
-begin
-	if(a=nil) then
-		begin
-			new(a);
-			a^.hi:= nil;
-			a^.hd:= nil;
-			a^.dato.dni:= p.dni;
-			a^.dato.nombre:= p.nombre;
-			a^.dato.l:= nil;
-			d.fecha:= p.fecha;
-			d.monto:= p.monto;
-			agregarAdelante(a^.dato.l, d);
-		end
-	else
-		if(p.dni = a^.dato.dni) then
-			begin
-				d.fecha:= p.fecha;
-				d.monto:= p.monto;
-				agregarAdelante(a^.dato.l, d);
-			end
-		else
-			if(p.dni < a^.dato.dni) then
-				agregarArbol(a^.hi, p)
-			else
-				agregarArbol(a^.hd, p);
-end;
-procedure leerPedido(var p: pedido);
-begin
-	p.monto:= Random(15) * 5;
-	if(p.monto <> 0) then
-		begin
-			p.dni:= Random(3) + 1;
-			p.nombre:= 'zzz';
-			p.fecha:= Random(31)+1;
-		end;
-end;
-procedure imprimirPedido(p: pedido);
-begin
-	writeln('DNI=', p.dni, ' FECHA=', p.fecha, ' MONTO=', p.monto:0:2);
+	aux^.dato:= reg;
 end;
 procedure cargarArbol(var a: arbol);
 var
-	p: pedido;
+	reg: registroLectura;
+	regL: registroLista;
+	hoja: arbol;
 begin
-	leerPedido(p);
-	imprimirPedido(p);
-	while(p.monto <> 0) do
+	leerPedido(reg);
+	while(reg.monto <> 0) do
 		begin
-			agregarArbol(a, p);
-			leerPedido(p);
-			imprimirPedido(p);
+			buscarHoja(a, hoja, reg.dni, reg.nombre);
+			convertirRegistro(reg, regL);
+			agregarAdelante(hoja^.dato.l, regL);
+			leerPedido(reg);
 		end;
 end;
-procedure verificarListaFecha(l: lista; fecha: integer; var cant: integer);
+procedure leerFecha(var f: fec);
+begin
+	writeln('Ingrese un dia');
+	readln(f.dia);
+	writeln('Ingrese un mes');
+	readln(f.mes);
+	writeln('Ingrese un anio');
+	readln(f.anio);
+end;
+procedure verificarListaFecha(l: lista; f: fec; var cant: integer);
 begin
 	while(l<>nil) do
 		begin
-			if(l^.dato.fecha = fecha) then
+			if(l^.dato.fecha.dia = f.dia) and (l^.dato.fecha.mes = f.mes) and (l^.dato.fecha.anio = f.anio) then
 				cant:= cant+1;
 			l:= l^.sig;
 		end;
 end;
-procedure cantClientesFecha(a: arbol; fecha: integer; var cant: integer);
+procedure cantClientesFecha(a: arbol; f: fec; var cant: integer);
 begin
-	if(a<>nil) then
+	if (a<>nil) then
 		begin
-			verificarListaFecha(a^.dato.l, fecha, cant);
-			cantClientesFecha(a^.hi, fecha, cant);
-			cantClientesFecha(a^.hd, fecha, cant);
+			verificarListaFecha(a^.dato.l, f, cant);
+			cantClientesFecha(a^.hi, f, cant);
+			cantClientesFecha(a^.hd, f, cant);
 		end;
 end;
-procedure calcularInfo(l: lista; var monto: real; var cant: integer);
+procedure informacionDNI(l: lista; var montoTotal: real; var cantTotal: integer);
 begin
 	while(l<>nil) do
 		begin
-			cant:= cant+1;
-			monto:= monto + l^.dato.monto;
+			cantTotal:= cantTotal + 1;
+			montoTotal:= montoTotal + l^.dato.monto;
 			l:= l^.sig;
 		end;
 end;
-procedure infoDNI(a: arbol; dni: integer; var monto: real; var cant: integer);
+procedure infoDNI(a: arbol; dni: integer; var montoTotal: real; var cantTotal: integer);
 begin
-	if(a <> nil) then
+	if(a<>nil) then
 		begin
 			if(a^.dato.dni = dni) then
-				calcularInfo(a^.dato.l, monto, cant)
+				informacionDNI(a^.dato.l, montoTotal, cantTotal)
 			else
-				if (dni < a^.dato.dni) then
-					infoDNI(a^.hi, dni, monto, cant)
+				if(dni < a^.dato.dni) then
+					infoDNI(a^.hi, dni, montoTotal, cantTotal)
 				else
-					infoDNI(a^.hd, dni, monto, cant);
+					infoDNI(a^.hd, dni, montoTotal, cantTotal);
 		end;
 end;
 procedure imprimirLista(l: lista);
 begin
 	while(l<>nil) do
 		begin
-			write(' | FECHA=', l^.dato.fecha, ' MONTO=', l^.dato.monto:0:2);
+			write(' -- Dia=', l^.dato.fecha.dia, ' Mes=', l^.dato.fecha.mes, ' Anio=', l^.dato.fecha.anio, ' Monto=', l^.dato.monto:0:2);
 			l:= l^.sig;
 		end;
 end;
-procedure imprimirCliente(c: cliente);
+procedure imprimirNodo(reg: registroArbol);
 begin
-	write('DNI=', c.dni);
-	imprimirLista(c.l);
+	write('DNI=', reg.dni, ' Nombre=', reg.nombre, ' Lista: ');
+	imprimirLista(reg.l);
 	writeln();
 end;
 procedure imprimirArbol(a: arbol);
 begin
-	if(a<>nil) then 
+	if(a<>nil) then
 		begin
 			imprimirArbol(a^.hi);
-			imprimirCliente(a^.dato);
+			imprimirNodo(a^.dato);
 			imprimirArbol(a^.hd);
 		end;
 end;
 var
 	a: arbol;
-	fecha, dni, cant: integer;
-	monto: real;
+	f: fec;
+	cant, dni: integer;
+	montoTotal: real;
 begin
 	Randomize;
+	a:= nil;
 	cargarArbol(a);
-	writeln('------------------');
 	imprimirArbol(a);
-	writeln('------------------');
-	writeln('Ingrese una fecha');
-	readln(fecha);
+	leerFecha(f);
 	cant:= 0;
-	cantClientesFecha(a, fecha, cant);
-	writeln('La cantidad de clientes que realizaron pedidos en la fecha ', fecha, ' es: ', cant);
-	writeln('------------------');
-	writeln('Ingrese un DNI');
+	cantClientesFecha(a,f,cant);
+	writeln('En el dia ', f.dia, ', mes ', f.mes, ', anio ', f.anio, ' se realizaron ', cant, ' pedidos');
+	writeln('Ingrese un numero de DNI');
 	readln(dni);
-	monto:= 0;
+	montoTotal:= 0;
 	cant:= 0;
-	infoDNI(a, dni, monto, cant);
-	writeln('El cliente con DNI ', dni, ' realizo ', cant, ' pedidos y gasto: ', monto:0:2);
+	infoDNI(a,dni,montoTotal,cant);
+	writeln('El cliente con DNI ', dni, ' realizo en total ', cant, ' pedidos y gasto un total de: ', montoTotal:0:2);
 end.
-

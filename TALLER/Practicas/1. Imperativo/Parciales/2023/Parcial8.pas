@@ -1,198 +1,191 @@
 program parcial8;
 type
-    alquiler = record
-        dni: integer;
-        patente: integer;
-        mes: integer;
-        anio: integer;
-    end;
-    alquiler2 = record
-        dni: integer;
-        mes: integer;
-        anio: integer;
-    end;
-    lista = ^nodo;
-    nodo = record
-        dato: alquiler2;
-        sig: lista;
-    end;
-    patente = record
-        codigo: integer;
-        l: lista;
-    end;
-    arbol = ^nodoArbol;
-    nodoArbol = record
-        dato: patente;
-        hi: arbol;
-        hd: arbol;
-    end;
-procedure leerAlquiler(var a: alquiler);
+	subMes = 1..12;
+	registroLectura = record
+		dni: integer;
+		patente: integer;
+		mes: subMes;
+		anio: integer;
+	end;
+	registroLista = record
+		dni: integer;
+		mes: subMes;
+		anio: integer;
+	end;
+	lista = ^nodoLista;
+	nodoLista = record	
+		dato: registroLista;
+		sig: lista;
+	end;
+	registroArbol = record
+		patente: integer;
+		l: lista;
+	end;
+	arbol = ^nodoArbol;
+	nodoArbol = record
+		dato: registroArbol;
+		hi: arbol;
+		hd: arbol;
+	end;
+procedure leerAlquiler(var reg: registroLectura);
 begin
-    a.patente:= Random(10);
-    if(a.patente <> 0) then
-        begin
-            a.dni:= Random(15) + 1;
-            a.mes:= Random(12) + 1;
-            a.anio:= Random(24) + 2000;
-        end;
+	reg.patente:= Random(15);
+	if(reg.patente <> 0) then
+		begin
+			reg.dni:= Random(50)+1;
+			reg.mes:= Random(12)+1;
+			reg.anio:= Random(24) + 2000;
+		end;
 end;
-procedure imprimirAlquiler(a: alquiler);
+procedure buscarHoja(var a, h: arbol; patente: integer);
 begin
-    writeln('PATENTE=',a.patente, ' DNI=', a.dni, ' MES=', a.mes, ' ANIO=', a.anio);
+	if(a = nil) or (a^.dato.patente = patente) then
+		begin
+			if(a=nil) then
+				begin
+					new(a);
+					a^.hi:= nil;
+					a^.hd:= nil;
+					a^.dato.l:= nil;
+					a^.dato.patente := patente;
+				end;
+			h:= a;
+		end
+	else
+		if(patente < a^.dato.patente) then
+			buscarHoja(a^.hi, h, patente)
+		else
+			buscarHoja(a^.hd, h, patente);
 end;
-procedure agregarAdelante(var l: lista; a: alquiler2);
+procedure convertirRegistro(reg: registroLectura; var regL: registroLista);
+begin
+	regL.dni:= reg.dni;
+	regL.anio:= reg.anio;
+	regL.mes:= reg.mes;
+end;
+procedure agregarAdelante(var l: lista; reg: registroLista);
 var
-    aux: lista;
+	aux: lista;
 begin
-    new(aux);
-    aux^.sig:= l;
-    l:= aux;
-    aux^.dato:= a;
-end;
-procedure agregarArbol(var a: arbol; alq: alquiler);
-var
-    alq2: alquiler2;
-begin
-    if( a = nil) then
-        begin
-            new(a);
-            a^.hi:= nil;
-            a^.hd:= nil;
-            a^.dato.codigo:= alq.patente;
-            a^.dato.l:= nil;
-            alq2.dni:= alq.dni;
-            alq2.mes:= alq.mes;
-            alq2.anio:= alq.anio;
-            agregarAdelante(a^.dato.l, alq2);
-        end
-    else
-        if(a^.dato.codigo = alq.patente) then
-            begin
-                alq2.dni:= alq.dni;
-                alq2.mes:= alq.mes;
-                alq2.anio:= alq.anio;
-                agregarAdelante(a^.dato.l, alq2);
-            end
-        else
-            if(alq.patente < a^.dato.codigo) then
-                agregarArbol(a^.hi, alq)
-            else
-                agregarArbol(a^.hd, alq);
+	new(aux);
+	aux^.sig:= l;
+	l:= aux;
+	aux^.dato:= reg;
 end;
 procedure cargarArbol(var a: arbol);
 var
-    alq: alquiler;
+	reg: registroLectura;
+	regL: registroLista;
+	hoja: arbol;
 begin
-    leerAlquiler(alq);
-    imprimirAlquiler(alq);
-    while(alq.patente <> 0) do
-        begin
-            agregarArbol(a, alq);
-            leerAlquiler(alq);
-            imprimirAlquiler(alq);
-        end;
+	leerAlquiler(reg);
+	while(reg.patente <> 0) do
+		begin
+			buscarHoja(a, hoja, reg.patente);
+			convertirRegistro(reg, regL);
+			agregarAdelante(hoja^.dato.l, regL);
+			leerAlquiler(reg);
+		end;
 end;
-procedure contarCantDNILista(l: lista; dni: integer; var cant: integer);
+procedure contarCantDNI(l: lista; dni: integer; var cant: integer);
 begin
-    while(l <> nil) do
-        begin
-            if(l^.dato.dni = dni) then
-                cant:= cant + 1;
-            l:= l^.sig;    
-        end;
+	while(l<>nil) do
+		begin
+			if(l^.dato.dni = dni) then
+				cant:= cant+1;
+			l:= l^.sig;
+		end;
 end;
-procedure contarCantDNIArbol(a: arbol; dni: integer; var cant: integer);
+procedure cantAlquileresDNI(a: arbol; dni: integer; var cant: integer);
 begin
-    if(a <> nil) then
-        begin
-            contarCantDNILista(a^.dato.l, dni, cant);
-            contarCantDNIArbol(a^.hi, dni, cant);
-            contarCantDNIArbol(a^.hd, dni, cant);
-        end;
+	if(a<>nil) then
+		begin
+			contarCantDNI(a^.dato.l, dni, cant);
+			cantAlquileresDNI(a^.hi, dni, cant);
+			cantAlquileresDNI(a^.hd, dni, cant);
+		end;
 end;
-procedure contarCantAnioLista(l: lista; anio: integer; var cant: integer);
+procedure contarCantAnio(l: lista; anio: integer; var cant: integer);
 begin
-    while(l <> nil) do
-        begin
-            if(l^.dato.anio = anio) then
-                cant:= cant + 1;
-            l:= l^.sig;    
-        end;
+	while(l<>nil) do
+		begin
+			if(l^.dato.anio = anio) then
+				cant:= cant+1;
+			l:= l^.sig;
+		end;
 end;
-procedure entreDosValores(a: arbol; anio, num1, num2: integer; var cant: integer);
+procedure entreDosValores(a: arbol; anio, pat1, pat2: integer; var cant: integer);
 begin
-    if(a <> nil) then
-        begin
-            if(a^.dato.codigo >= num1) and (a^.dato.codigo <= num2) then
-                begin
-                    contarCantAnioLista(a^.dato.l, anio, cant);
-                    entreDosValores(a^.hi, anio, num1, num2, cant);
-                    entreDosValores(a^.hd, anio, num1, num2, cant);
-                end
-            else
-                if(a^.dato.codigo > num1) then
-                    entreDosValores(a^.hi, anio, num1, num2, cant)
-                else
-                    entreDosValores(a^.hd, anio, num1, num2, cant);
-        end;
+	if(a<>nil) then
+		begin
+			if(a^.dato.patente >= pat1) and (a^.dato.patente <= pat2) then
+				begin
+					contarCantAnio(a^.dato.l, anio, cant);
+					entreDosValores(a^.hi, anio, pat1, pat2, cant);
+					entreDosValores(a^.hd, anio, pat1, pat2, cant)
+				end
+			else
+				if(a^.dato.patente > pat1) then
+					entreDosValores(a^.hi, anio, pat1, pat2, cant)
+				else
+					entreDosValores(a^.hd, anio, pat1, pat2, cant);
+		end;
 end;
 procedure imprimirLista(l: lista);
 begin
-    while(l <> nil) do
-        begin
-            write(' | DNI=', l^.dato.dni, ' MES=', l^.dato.mes, ' ANIO=', l^.dato.anio);
-            l:= l^.sig;
-        end;
+	while(l<>nil) do
+		begin
+			write('DNI=', l^.dato.dni, ' Mes=', l^.dato.mes, ' Anio=', l^.dato.anio, ' - ');
+			l:= l^.sig;
+		end;
 end;
-procedure imprimirPatente(p: patente);
+procedure imprimirNodo(reg: registroArbol);
 begin
-    write('PATENTE=', p.codigo);
-    imprimirLista(p.l);
-    writeln();
+	write('Patente=', reg.patente, ' Lista:');
+	imprimirLista(reg.l);
+	writeln();
 end;
 procedure imprimirArbol(a: arbol);
 begin
-    if(a <> nil) then
-        begin
-            imprimirArbol(a^.hi);
-            imprimirPatente(a^.dato);
-            imprimirArbol(a^.hd);
-        end;
+	if(a<>nil) then
+		begin
+			imprimirArbol(a^.hi);
+			imprimirNodo(a^.dato);
+			imprimirArbol(a^.hd);
+		end;
 end;
-procedure verificar(var pat1, pat2: integer);
+procedure verificar(var num1, num2: integer);
 var
-    aux: integer;
+	aux: integer;
 begin
-    if(pat1 > pat2) then
-        begin
-            aux:= pat1;
-            pat1:= pat2;
-            pat2:= aux;
-        end;
+	if(num1 > num2) then
+		begin
+			aux:= num1;
+			num1:= num2;
+			num2:= aux;
+		end;
 end;
 var
-    a: arbol;
-    num1, cant, pat1, pat2, anio: integer;
+	a: arbol;
+	dni, cant, pat1, pat2, anio: integer;
 begin
-    Randomize;
-    cargarArbol(a);
-    writeln('-------------');
-    imprimirArbol(a);
-    writeln('-------------');
-    writeln('Ingrese un numero de DNI');
-    readln(num1);
-    cant:= 0;
-    contarCantDNIArbol(a, num1, cant);
-    writeln('La cantidad de alquileres realizados por el DNI ', num1, ' es: ', cant);
-    writeln('-------------');
-    writeln('Ingrese un anio');
-    readln(anio);
-    writeln('Ingrese un primer numero de patente');
-    readln(pat1);
-    writeln('Ingrese un segundo numero de patente');
-    readln(pat2);
-    cant:= 0;
-    verificar(pat1, pat2);
-    entreDosValores(a, anio, pat1, pat2, cant);
-    writeln('La cantidad de alquileres realizados para las patentes entre ', pat1, ' y ', pat2, ' durante el anio ', anio, ' es: ', cant);
+	Randomize;
+	a:= nil;
+	cargarArbol(a);
+	imprimirArbol(a);
+	writeln('Ingrese un numero de DNI');
+	readln(dni);
+	cant:= 0;
+	cantAlquileresDNI(a, dni, cant);
+	writeln('La cantidad de alquileres realizados por el dni ', dni, ' es: ', cant);
+	writeln('Ingrese un anio X');
+	readln(anio);
+	writeln('Ingrese una primer patente');
+	readln(pat1);
+	writeln('Ingrese una segunda patente');
+	readln(pat2);
+	cant:= 0;
+	verificar(pat1, pat2);
+	entreDosValores(a, anio, pat1, pat2, cant);
+	writeln('La cantidad de alquileres realizados para las patentes entre ', pat1, ' y ', pat2, ' en el anio ', anio, ' es: ', cant);
 end.

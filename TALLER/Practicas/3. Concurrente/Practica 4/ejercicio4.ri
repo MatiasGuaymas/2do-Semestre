@@ -65,7 +65,7 @@ robots
           trabajador := 1
         sino
           trabajador := 2
-          Random(tarea, 1, 4)
+      Random(tarea, 1, 4)
       Random(av, 2, 100)
       Random(ca, 2, 100)
       si (trabajador = 1)
