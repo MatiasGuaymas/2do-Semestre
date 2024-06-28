@@ -36,6 +36,7 @@ public class FinalDiciembre {
         System.out.println(agen.cerrarApuestas());
         agen.limpiarApuestas();
         System.out.println(agen.cerrarApuestas());
+        
     }
     
 }
