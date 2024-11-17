@@ -1,13 +1,3 @@
-## MAT2
-
-- Teoría.
-
-- Modelos de parciales (1ra y 2da fecha) + resoluciones.
-
-## Autor
-
-[Matias Guaymas](https://www.linkedin.com/in/matiasguaymas/)
-
 <h1 align="center"> Segundo Semestre 2023 APU </h1>
 
 En este repositorio encontrarás todo el material utilizado en el segundo semestre de la carrera Analista Programador Universitario en la UNLP.
