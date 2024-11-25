@@ -6,13 +6,9 @@ Espero que les sea de ayuda, y muchos éxitos. 😀
 
 ## TALLER
 
-* [**Prácticas Resueltas (2023 y 2024) + Modelos de parciales**](https://github.com/MatiasGuaymas/Taller-Programacion)
+* [**Prácticas Resueltas (2023 y 2024)**](https://github.com/MatiasGuaymas/Taller-Programacion)
 
 * [**Teoría**](https://github.com/MatiasGuaymas/2do-Semestre/tree/main/TALLER/Teoria)
-
-* [**Más parciales**](https://github.com/MatiasGuaymas/2do-Semestre/tree/main/TALLER/Modelos%20de%20parciales)
-
-* [**Finales**](https://github.com/MatiasGuaymas/2do-Semestre/tree/main/TALLER/Finales)
 
 ## AC
 
